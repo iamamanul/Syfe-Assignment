@@ -1,0 +1,61 @@
+FROM ubuntu:20.04 AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpcre3-dev \
+    zlib1g-dev \
+    libssl-dev \
+    wget \
+    perl \
+    make \
+    gcc \
+    curl \
+    libreadline-dev \
+    libncurses5-dev \
+    libpcre3-dev \
+    libssl-dev \
+    luarocks \
+    lua5.1 \
+    lua5.1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and compile OpenResty
+WORKDIR /tmp
+RUN wget https://openresty.org/download/openresty-1.21.4.1.tar.gz && \
+    tar -xzf openresty-1.21.4.1.tar.gz && \
+    cd openresty-1.21.4.1 && \
+    ./configure \
+        --prefix=/opt/openresty \
+        --with-pcre-jit \
+        --with-ipv6 \
+        --without-http_redis2_module \
+        --with-http_iconv_module \
+        --with-http_postgres_module \
+        --with-luajit \
+        -j8 && \
+    make -j8 && \
+    make install
+
+# Final image
+FROM ubuntu:20.04
+COPY --from=builder /opt/openresty /opt/openresty
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libpcre3 \
+    zlib1g \
+    libssl1.1 \
+    lua5.1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add OpenResty to PATH
+ENV PATH=/opt/openresty/nginx/sbin:$PATH
+ENV PATH=/opt/openresty/bin:$PATH
+
+# Copy Nginx config
+COPY nginx.conf /opt/openresty/nginx/conf/nginx.conf
+
+EXPOSE 80
+
+CMD ["/opt/openresty/nginx/sbin/nginx", "-g", "daemon off;"]

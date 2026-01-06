@@ -1,0 +1,17 @@
+apiVersion: v2
+name: wordpress-openresty
+description: Production WordPress with OpenResty Nginx on Kubernetes
+type: application
+version: 1.0.0
+appVersion: "6.0"
+
+# Dependencies
+dependencies:
+  - name: mysql
+    version: "9.7.0"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: mysql.enabled
+  - name: prometheus
+    version: "25.8.0"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: monitoring.enabled

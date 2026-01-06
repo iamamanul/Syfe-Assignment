@@ -1,0 +1,20 @@
+WordPress with OpenResty Nginx has been deployed!
+
+1. Get the WordPress URL by running:
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Release.Name }}-nginx-service)
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo "WordPress URL: http://$NODE_IP:$NODE_PORT"
+
+2. Get the Grafana URL by running:
+  export GRAFANA_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Release.Name }}-grafana)
+  echo "Grafana URL: http://$NODE_IP:$GRAFANA_PORT"
+  echo "Grafana Credentials: Username: admin | Password: admin"
+
+3. Monitor your deployment:
+  kubectl get pods,svc,pvc -l release={{ .Release.Name }}
+
+{{- if .Values.monitoring.enabled }}
+4. Monitoring is enabled. Access Prometheus at:
+  export PROMETHEUS_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Release.Name }}-prometheus-server)
+  echo "Prometheus URL: http://$NODE_IP:$PROMETHEUS_PORT"
+{{- end }}

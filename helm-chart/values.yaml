@@ -1,0 +1,73 @@
+# WordPress Configuration
+wordpress:
+  replicaCount: 2
+  image:
+    repository: wordpress
+    tag: php8.0-apache
+    pullPolicy: IfNotPresent
+  env:
+    WORDPRESS_DB_HOST: "{{ .Release.Name }}-mysql"
+    WORDPRESS_DB_USER: wordpress
+    WORDPRESS_DB_PASSWORD: wordpress
+    WORDPRESS_DB_NAME: wordpress
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Nginx (OpenResty) Configuration
+nginx:
+  enabled: true
+  image:
+    repository: openresty/openresty
+    tag: alpine
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+  service:
+    type: NodePort
+    port: 80
+    nodePort: 30082
+
+# MySQL Configuration
+mysql:
+  enabled: true
+  image:
+    repository: mysql
+    tag: "5.7"
+  auth:
+    rootPassword: rootpassword
+    database: wordpress
+    username: wordpress
+    password: wordpress
+  primary:
+    persistence:
+      enabled: true
+      size: 2Gi
+      accessMode: ReadWriteOnce
+
+# Persistence
+persistence:
+  enabled: true
+  accessMode: ReadWriteMany
+  size: 5Gi
+  storageClass: manual-rwx
+
+# Monitoring
+monitoring:
+  enabled: true
+  prometheus:
+    scrapeInterval: 30s
+  grafana:
+    adminPassword: admin
+    service:
+      type: NodePort
+      nodePort: 30081

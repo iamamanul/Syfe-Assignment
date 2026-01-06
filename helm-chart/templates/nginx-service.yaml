@@ -1,0 +1,19 @@
+{{- if .Values.nginx.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-nginx-service
+  labels:
+    app: {{ .Release.Name }}-nginx
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  type: {{ .Values.nginx.service.type }}
+  ports:
+  - port: {{ .Values.nginx.service.port }}
+    targetPort: 80
+    nodePort: {{ .Values.nginx.service.nodePort }}
+    name: http
+  selector:
+    app: {{ .Release.Name }}-nginx
+{{- end }}

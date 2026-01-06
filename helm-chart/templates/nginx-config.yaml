@@ -1,0 +1,46 @@
+{{- if .Values.nginx.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-nginx-config
+  labels:
+    app: {{ .Release.Name }}-nginx
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    http {
+        upstream wordpress_backend {
+            server {{ .Release.Name }}-wordpress-service:80;
+        }
+
+        server {
+            listen 80;
+
+            location / {
+                # Lua example - OpenResty with Lua enabled
+                set_by_lua_block $lua_version {
+                    return "OpenResty-Lua-JIT"
+                }
+                add_header X-Lua-Enabled $lua_version;
+                
+                proxy_pass http://wordpress_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            # Metrics endpoint for Prometheus
+            location /nginx_status {
+                stub_status on;
+                access_log off;
+                allow 127.0.0.1;
+                deny all;
+            }
+        }
+    }
+{{- end }}
